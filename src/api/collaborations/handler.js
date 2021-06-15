@@ -10,25 +10,21 @@ class CollaborationsHandler {
         this.deleteCollaborationHandler = this.deleteCollaborationHandler.bind(this);
     }
 
-    async postCollaborationHandler(request, h) {
+
+
+    async deleteCollaborationHandler(request, h) {
         try {
             this._validator.validateCollaborationPayload(request.payload);
             const { id: credentialId } = request.auth.credentials;
             const { playlistId, userId } = request.payload;
 
             await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
-            const collaborationId = await this._collaborationsService
-                .addCollaboration(playlistId, userId);
+            await this._collaborationsService.deleteCollaboration(playlistId, userId);
 
-            const response = h.response({
+            return {
                 status: "success",
-                message: "Kolaborasi berhasil ditambahkan",
-                data: {
-                    collaborationId,
-                },
-            });
-            response.code(201);
-            return response;
+                message: "Kolaborasi berhasil dihapus",
+            };
         } catch (error) {
             if (error instanceof ClientError) {
                 const response = h.response({
@@ -50,19 +46,25 @@ class CollaborationsHandler {
         }
     }
 
-    async deleteCollaborationHandler(request, h) {
+    async postCollaborationHandler(request, h) {
         try {
             this._validator.validateCollaborationPayload(request.payload);
             const { id: credentialId } = request.auth.credentials;
             const { playlistId, userId } = request.payload;
 
             await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
-            await this._collaborationsService.deleteCollaboration(playlistId, userId);
+            const collaborationId = await this._collaborationsService
+                .addCollaboration(playlistId, userId);
 
-            return {
+            const response = h.response({
                 status: "success",
-                message: "Kolaborasi berhasil dihapus",
-            };
+                message: "Kolaborasi berhasil ditambahkan",
+                data: {
+                    collaborationId,
+                },
+            });
+            response.code(201);
+            return response;
         } catch (error) {
             if (error instanceof ClientError) {
                 const response = h.response({

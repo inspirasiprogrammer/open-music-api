@@ -13,28 +13,20 @@ class PlaylistsHandler {
         this.deletePlaylistByIdHandler = this.deletePlaylistByIdHandler.bind(this);
     }
 
-    async postPlaylistHandler(request, h) {
+
+    async putPlaylistByIdHandler(request, h) {
         try {
             this._validator.validatePlaylistPayload(request.payload);
-            const {
-                name,
-            } = request.payload;
+            const { id } = request.params;
             const { id: credentialId } = request.auth.credentials;
 
-            const playlistId = await this._playlistsService.addPlaylist({
-                name,
-                owner: credentialId,
-            });
+            await this._playlistsService.verifyPlaylistAccess(id, credentialId);
+            await this._playlistsService.editPlaylistById(id, request.payload);
 
-            const response = h.response({
+            return {
                 status: "success",
-                message: "Playlist berhasil ditambahkan",
-                data: {
-                    playlistId,
-                },
-            });
-            response.code(201);
-            return response;
+                message: "Playlist berhasil diperbarui",
+            };
         } catch (error) {
             if (error instanceof ClientError) {
                 const response = h.response({
@@ -128,19 +120,28 @@ class PlaylistsHandler {
         }
     }
 
-    async putPlaylistByIdHandler(request, h) {
+    async postPlaylistHandler(request, h) {
         try {
             this._validator.validatePlaylistPayload(request.payload);
-            const { id } = request.params;
+            const {
+                name,
+            } = request.payload;
             const { id: credentialId } = request.auth.credentials;
 
-            await this._playlistsService.verifyPlaylistAccess(id, credentialId);
-            await this._playlistsService.editPlaylistById(id, request.payload);
+            const playlistId = await this._playlistsService.addPlaylist({
+                name,
+                owner: credentialId,
+            });
 
-            return {
+            const response = h.response({
                 status: "success",
-                message: "Playlist berhasil diperbarui",
-            };
+                message: "Playlist berhasil ditambahkan",
+                data: {
+                    playlistId,
+                },
+            });
+            response.code(201);
+            return response;
         } catch (error) {
             if (error instanceof ClientError) {
                 const response = h.response({
@@ -161,6 +162,7 @@ class PlaylistsHandler {
             return response;
         }
     }
+
 
     async deletePlaylistByIdHandler(request, h) {
         try {
